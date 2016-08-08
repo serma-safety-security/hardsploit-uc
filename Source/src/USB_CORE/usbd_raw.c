@@ -10,9 +10,7 @@
 #include "usbd_ctlreq.h"
 #include "usbd_raw.h"
 #include "spi_flash.h"
-unsigned char versionNumber[] ={"HW:V1.00 SW:V1.0.2"};  //Size 18
-
-
+unsigned char versionNumber[] ={"HW:V1.00 SW:V1.0.3"};  //Size 18
 
 static uint8_t  USBD_RAW_Init (USBD_HandleTypeDef *pdev, 
                                uint8_t cfgidx);
@@ -150,7 +148,6 @@ void endProcessCommandAllowReceiveAgain(){
 	 rx_raw_FrameLen=0;
 	 // initiate next USB packet transfer, to append to existing data in buffer
 	 USBD_LL_PrepareReceive(&hUsbDeviceFS,RAW_EPOUT_ADDR,rx_raw_packet,RAW_EP_SIZE);
-
  }
 
 
@@ -168,8 +165,6 @@ void processCommand(){
 	//Data_buffer_Transmit[1] = 0; // High byte of length set in  sendAndWaitIfNotReadyAndValidCommand before send
 	Data_buffer_Transmit[2] = rx_raw_Frame[2]; //at minimum, answer is Low byte of command
 	Data_buffer_Transmit[3] = rx_raw_Frame[3]; //at minimum, answer is Hight byte of command
-
-
 
 switch (lowHighByteToInt(rx_raw_Frame[2],rx_raw_Frame[3])  ){
 		case FPGA_COMMAND :
@@ -262,8 +257,8 @@ switch (lowHighByteToInt(rx_raw_Frame[2],rx_raw_Frame[3])  ){
 		 	case ERASE_FIRMWARE :
 		 		Data_buffer_Transmit[4] = 1;
 		 		lengthTxData =   4 + 1;  //increment length because send a value (1=ok)
+		 		//sFLASH_ERASE_BULK(); //slow replaced by just erasing 2 sectors
 		 		sFLASH_ERASE();
-		 		//sFLASH_ERASE_BULK();
 		 		mustValidCommandAfterSend = 1;
 		 		sendUSB(Data_buffer_Transmit,lengthTxData);
 
@@ -271,18 +266,17 @@ switch (lowHighByteToInt(rx_raw_Frame[2],rx_raw_Frame[3])  ){
 		 	case READ_PAGE_FIRMWARE :
 
 		 		if (rx_raw_Frame[6] <= 31) {//Just check number of page if not less than 31 do nothing
-		 			lengthTxData =   (uint16_t)rx_raw_Frame[6] * 256;
+		 			lengthTxData =   (uint32_t)rx_raw_Frame[6] * 256;
 
 		 			Data_buffer_Transmit[4] = rx_raw_Frame[4]; //low byte Number of the first page
 		 			Data_buffer_Transmit[5] = rx_raw_Frame[5]; //high byte Number of the first page
 		 			Data_buffer_Transmit[6] = rx_raw_Frame[6]; //Nb of page
 
-					addr = lowHighByteToInt(rx_raw_Frame[4],rx_raw_Frame[5])*256;
+		 			addr=lowHighByteToInt(rx_raw_Frame[4],rx_raw_Frame[5])*256;
 					sFLASH_Read(*(&Data_buffer_Transmit)+7,addr,lengthTxData);
 
 					mustValidCommandAfterSend = 1;
 					sendUSB(Data_buffer_Transmit,lengthTxData+7);
-
 
 		 		}else{
 		 			Data_buffer_Transmit[2] = LOBYTE(COMMAND_NOT_FOUND);
@@ -297,8 +291,8 @@ switch (lowHighByteToInt(rx_raw_Frame[2],rx_raw_Frame[3])  ){
 		 		//Data_buffer_Transmit[5] = rx_raw_Frame[5]; //high byte Number of the first page
 		 		//Data_buffer_Transmit[6] = rx_raw_Frame[6]; //Nb of page  (31 max)
 
+	 			addr=lowHighByteToInt(rx_raw_Frame[4],rx_raw_Frame[5])*256;
 		 		for (int i=0;i< rx_raw_Frame[6];i++){
-		 			addr=lowHighByteToInt(rx_raw_Frame[4],rx_raw_Frame[5])*256;
 		 			sFLASH_WritePage(*(&rx_raw_Frame)+7+i*256,addr+i*256,256);
 		 		}
 

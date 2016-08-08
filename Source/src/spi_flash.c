@@ -73,13 +73,13 @@ void  sFLASH_ERASE(void){
 	unsigned char eraseCommandSector1[] = {0xD8,0x00,0x00,0x00}; //Sector erase command + erase first sector
 	unsigned char eraseCommandSector2[] = {0xD8,0x01,0x00,0x00}; //Sector erase command + erase second sector
 
-	sFLASH_WRITE_ENABLE();
+
 
 
 //4Mb flash memory
 //With 512kb per sector
-//We need to erase sector 1 and 2   at 0x00  and 0x10000
-
+//We need to erase sector 1 and 2   at 0x00  and 0x10000  to erase RPD file
+	sFLASH_WRITE_ENABLE();
 	sFLASH_CS_LOW();
  	HAL_SPI_Transmit(&hspi2, *(&eraseCommandSector1),4, 5000);
 	sFLASH_CS_HIGH();
@@ -87,8 +87,7 @@ void  sFLASH_ERASE(void){
 	  /*!< Wait the end of Flash writing */
 	 sFLASH_WaitForWriteEnd();
 
-
-
+	sFLASH_WRITE_ENABLE();
 	sFLASH_CS_LOW();
 	HAL_SPI_Transmit(&hspi2, *(&eraseCommandSector2),4, 5000);
 	sFLASH_CS_HIGH();
@@ -122,8 +121,8 @@ uint8_t  sFLASH_READID(void){
   */
 uint8_t sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
 {
-		unsigned char statut =0x00;
-	  unsigned char write[4] = {sFLASH_CMD_WRITE, (WriteAddr & 0xFF0000) >> 16, (WriteAddr& 0xFF00) >> 8, WriteAddr & 0xFF};
+	  unsigned char statut =0x00;
+	  unsigned char writecommand[4] = {sFLASH_CMD_WRITE, ((WriteAddr & 0xFF0000) >> 16) & 0xFF, ((WriteAddr & 0xFF00) >> 8) & 0xFF, WriteAddr & 0xFF};
 
 
 	  if (NumByteToWrite >256 ){
@@ -136,7 +135,7 @@ uint8_t sFLASH_WritePage(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteT
 
 	  sFLASH_CS_LOW();
 
-	  HAL_SPI_Transmit(&hspi2, *(&write), 4, 5000);
+	  HAL_SPI_Transmit(&hspi2, *(&writecommand), 4, 5000);
 	  HAL_SPI_Transmit(&hspi2,pBuffer, NumByteToWrite, 5000);
 
 

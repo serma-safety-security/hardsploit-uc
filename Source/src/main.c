@@ -87,9 +87,6 @@ int main(void)
     /* LED of uC are off */
 	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,0);
 
-
-
-
 	MX_USB_DEVICE_Init();
 	Delay(5000);
 
@@ -122,11 +119,12 @@ uint8_t sendUSB(uint8_t * buffer, uint16_t size){
 
 }
 void processFPGAData(){
-	//Indicate that a buffer is full
+	//Indicate to FPGA buffer is busy because transmitting
 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_6,1);
 
 	//Transmit to USB ( length of data acquire by DMA)   4 + (8187 -sizeDMA)
 	size_temp = 8186 - __HAL_DMA_GET_COUNTER( hspi1.hdmarx )+4;
+
 
 	Sent_FPGA_DATA_inProgress = 1;
 	sendUSB(receiveRawDataFromFPGABySPI,size_temp);
