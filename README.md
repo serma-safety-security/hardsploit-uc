@@ -17,6 +17,6 @@
 
     FOR SUPPORT / HELP
 
-### [GO TO BUG TRACKER] (https://github.com/OPALESECURITY/hardsploit-uc/issues)
+### [GO TO BUG TRACKER] (https://github.com/serma-safety-security/hardsploit-uc/issues)
 
     FOR BUGS OR IMPROVEMENTS
